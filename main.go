@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -137,9 +138,11 @@ func lb(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var serverList string
 	var port int
+	var weights string
 
 	flag.StringVar(&method, "method", "rr", "Select load balancing method (rr|wrr)")
 	flag.StringVar(&serverList, "servers", "", "Load balanced servers")
+	flag.StringVar(&weights, "weights", "", "Comma separated list of backend weights, integer only")
 	flag.IntVar(&port, "port", 3030, "Port")
 	flag.Parse()
 
@@ -150,9 +153,29 @@ func main() {
 	if method != "rr" && method != "wrr" {
 		log.Fatal("Method should be either rr or wrr")
 	}
+	if method == "wrr" && len(weights) == 0 {
+		log.Fatal("Weights are required for wrr method")
+	}
+
+	tokens := strings.Split(serverList, ",")
+
+	// parse weights
+	weightsList := strings.Split(weights, ",")
+	if len(weightsList) > 0 {
+		if len(weightsList) != len(tokens) {
+			log.Fatal("The number of weights should match the number of backends")
+		}
+
+		for i, w := range weightsList {
+			weight, err := strconv.ParseUint(w, 10, 64)
+			if err != nil {
+				log.Fatal("Weights need to be integers", err)
+			}
+			serverPool.backends[i].Weight = weight
+		}
+	}
 
 	// parse servers
-	tokens := strings.Split(serverList, ",")
 	for _, tok := range tokens {
 		serverUrl, err := url.Parse(tok)
 		if err != nil {

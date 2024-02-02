@@ -20,6 +20,7 @@ Run the load balancer with the following command:
 ```
 
 - `-servers` is a comma-separated list of backend servers.
+- `-weights` is a comma-separated list of weights for the corresponding servers.
 - `-port` specifies the port on which the load balancer will listen.
 - `-method` selects the load balancing method (`rr` for round-robin, `wrr` for weighted round-robin).
 

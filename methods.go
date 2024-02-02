@@ -9,22 +9,23 @@ func (s *ServerPool) NextIndex() int {
 
 // GetNextPeer returns next active peer to take a connection
 func (s *ServerPool) GetNextRRPeer() *Backend {
-	// loop entire backends to find out an Alive backend
 	next := s.NextIndex()
-	l := len(s.backends) + next // start from next and move a full cycle
+	l := len(s.backends) + next
+
 	for i := next; i < l; i++ {
-		idx := i % len(s.backends)     // take an index by modding
-		if s.backends[idx].IsAlive() { // if we have an alive backend, use it and store if its not the original one
+		idx := i % len(s.backends)
+		if s.backends[idx].IsAlive() {
 			if i != next {
 				atomic.StoreUint64(&s.current, uint64(idx))
 			}
 			return s.backends[idx]
 		}
 	}
+
 	return nil
 }
 
-// GetNextPeer returns next active peer to take a connection
+// GetNextWRRPeer returns next active weighted peer to take a connection
 func (s *ServerPool) GetNextWRRPeer() *Backend {
 	if len(s.backends) == 0 {
 		return nil

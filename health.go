@@ -31,15 +31,14 @@ func (s *ServerPool) HealthCheck() {
 	}
 }
 
-// healthCheck runs a routine for check status of the backends every 2 mins
+// / RunHealthCheck runs a routine for check status of the backends every 2 mins
 func RunHealthCheck() {
 	t := time.NewTicker(time.Minute * 2)
-	for {
-		select {
-		case <-t.C:
-			log.Println("Starting health check")
-			serverPool.HealthCheck()
-			log.Println("Completed")
-		}
+	defer t.Stop()
+
+	for range t.C {
+		log.Println("Starting health check")
+		serverPool.HealthCheck()
+		log.Println("Health check completed")
 	}
 }
